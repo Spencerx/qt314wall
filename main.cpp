@@ -48,7 +48,7 @@ Flow::Flow(QObject *parent) : QObject(parent),
     ctxmenu = new QMenu();
 
     a = new QAction(this);
-    a->setText("Show");
+    a->setText(tr("Show"));
     connect(a, &QAction::triggered, this, &Flow::show_triggered);
     ctxmenu->addAction(a);
 
