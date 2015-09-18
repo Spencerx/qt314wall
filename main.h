@@ -20,6 +20,7 @@ public:
 
 private slots:
     void show_triggered();
+    void enabled_toggled(bool state);
     void dialogDataChanged(const dialogdata &d);
     void changeWall();
     void changeWallConvertFinished(int exitCode);
@@ -30,6 +31,7 @@ private:
     QMenu *ctxmenu;
     QTimer *timer;
     QProcess *converter;
+    QAction *enableAction;
     dialogdata settings;
     QStringList items;
     QString destfolder;
@@ -44,6 +46,7 @@ private:
     void updateTimerInterval();
     void updateDestFolder();
     void updateTargetString();
+    void updateEnabled();
     void changeOneWall();
     QString calcTileSize(const QString &srcfname);
 };

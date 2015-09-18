@@ -52,6 +52,12 @@ Flow::Flow(QObject *parent) : QObject(parent),
     connect(a, &QAction::triggered, this, &Flow::show_triggered);
     ctxmenu->addAction(a);
 
+    enableAction = new QAction(this);
+    enableAction->setText(tr("Enable"));
+    enableAction->setCheckable(true);
+    connect(enableAction, &QAction::toggled, this, &Flow::enabled_toggled);
+    ctxmenu->addAction(enableAction);
+
     sysicon->setContextMenu(ctxmenu);
 
     window = new MainWindow();
@@ -80,6 +86,7 @@ void Flow::run()
     updateTimerInterval();
     updateDestFolder();
     updateTargetString();
+    updateEnabled();
     window->setData(settings);
     sysicon->show();
     changeOneWall();
@@ -87,8 +94,21 @@ void Flow::run()
 
 void Flow::show_triggered()
 {
+    window->setData(settings);
     window->showNormal();
     window->activateWindow();
+}
+
+void Flow::enabled_toggled(bool state)
+{
+    settings.running = state;
+    storeSettings();
+    if (state) {
+        updateTimerInterval();
+        changeOneWall();
+    } else {
+        timer->stop();
+    }
 }
 
 void Flow::dialogDataChanged(const dialogdata &d)
@@ -98,6 +118,7 @@ void Flow::dialogDataChanged(const dialogdata &d)
     updateTimerInterval();
     updateDestFolder();
     updateTargetString();
+    updateEnabled();
     changeOneWall();
 }
 
@@ -200,6 +221,11 @@ void Flow::updateTargetString()
 {
     targetString = QString("%1x%2").arg(settings.target.width())
             .arg(settings.target.height());
+}
+
+void Flow::updateEnabled()
+{
+    enableAction->setChecked(settings.running);
 }
 
 void Flow::changeOneWall()
