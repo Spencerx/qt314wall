@@ -66,6 +66,7 @@ void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
 void MainWindow::on_listfileBrowse_clicked()
 {
     QFileDialog *qfd = new QFileDialog(this);
+    qfd->setAttribute(Qt::WA_DeleteOnClose);
     qfd->setWindowTitle(tr("Open Text File"));
     qfd->selectFile(ui->listfile->text());
     connect(qfd, &QFileDialog::fileSelected,
@@ -81,6 +82,7 @@ void MainWindow::listfileBrowseDialog_selected(const QString &selected)
 void MainWindow::on_bgcolorSelect_clicked()
 {
     QColorDialog *qcd = new QColorDialog(this);
+    qcd->setAttribute(Qt::WA_DeleteOnClose);
     qcd->setCurrentColor(QColor(ui->bgcolor->text()));
     connect(qcd, &QColorDialog::colorSelected,
             this, &MainWindow::bgcolorSelectDialog_selected);
