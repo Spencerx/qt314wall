@@ -69,14 +69,10 @@ void MainWindow::on_listfileBrowse_clicked()
     qfd->setAttribute(Qt::WA_DeleteOnClose);
     qfd->setWindowTitle(tr("Open Text File"));
     qfd->selectFile(ui->listfile->text());
-    connect(qfd, &QFileDialog::fileSelected,
-            this, &MainWindow::listfileBrowseDialog_selected);
+    connect(qfd, &QFileDialog::fileSelected, [this](const QString &selected) {
+        this->ui->listfile->setText(selected);
+    });
     qfd->show();
-}
-
-void MainWindow::listfileBrowseDialog_selected(const QString &selected)
-{
-    ui->listfile->setText(selected);
 }
 
 void MainWindow::on_bgcolorSelect_clicked()
@@ -84,16 +80,12 @@ void MainWindow::on_bgcolorSelect_clicked()
     QColorDialog *qcd = new QColorDialog(this);
     qcd->setAttribute(Qt::WA_DeleteOnClose);
     qcd->setCurrentColor(QColor(ui->bgcolor->text()));
-    connect(qcd, &QColorDialog::colorSelected,
-            this, &MainWindow::bgcolorSelectDialog_selected);
+    connect(qcd, &QColorDialog::colorSelected, [this](const QColor &color) {
+        this->ui->bgcolor->setText(color.name());
+        this->ui->bgcolor->setFocus();
+        this->updateBgcolorWidgetSheet();
+    });
     qcd->show();
-}
-
-void MainWindow::bgcolorSelectDialog_selected(const QColor &color)
-{
-    ui->bgcolor->setText(color.name());
-    ui->bgcolor->setFocus();
-    updateBgcolorWidgetSheet();
 }
 
 void MainWindow::on_bgcolor_textChanged(const QString &arg1)

@@ -48,10 +48,8 @@ private slots:
     void on_buttonBox_clicked(QAbstractButton *button);
 
     void on_listfileBrowse_clicked();
-    void listfileBrowseDialog_selected(const QString &selected);
 
     void on_bgcolorSelect_clicked();
-    void bgcolorSelectDialog_selected(const QColor &color);
 
     void on_bgcolor_textChanged(const QString &arg1);
 
