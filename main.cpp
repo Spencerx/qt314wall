@@ -58,6 +58,11 @@ Flow::Flow(QObject *parent) : QObject(parent),
     connect(enableAction, &QAction::toggled, this, &Flow::enabled_toggled);
     ctxmenu->addAction(enableAction);
 
+    a = new QAction(this);
+    a->setText(tr("Next Image"));
+    connect(a, &QAction::triggered, this, &Flow::nextImage_triggered);
+    ctxmenu->addAction(a);
+
     sysicon->setContextMenu(ctxmenu);
 
     window = new MainWindow();
@@ -109,6 +114,11 @@ void Flow::enabled_toggled(bool state)
     } else {
         timer->stop();
     }
+}
+
+void Flow::nextImage_triggered()
+{
+    changeOneWall();
 }
 
 void Flow::dialogDataChanged(const dialogdata &d)

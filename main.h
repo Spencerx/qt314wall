@@ -21,6 +21,7 @@ public:
 private slots:
     void show_triggered();
     void enabled_toggled(bool state);
+    void nextImage_triggered();
     void dialogDataChanged(const dialogdata &d);
     void changeWall();
     void changeWallConvertFinished(int exitCode);
