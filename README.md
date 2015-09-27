@@ -1,4 +1,4 @@
-## Cutie-pie Wallpaper Change aka Waifu Slideshow
+## Cutie-pie Wallpaper Changer aka Waifu Slideshow
 
 Slideshow generator for KDE.
 
