@@ -125,6 +125,7 @@ void Flow::dialogDataChanged(const dialogdata &d)
 {
     settings = d;
     storeSettings();
+    updateItems();
     updateTimerInterval();
     updateDestFolder();
     updateTargetString();
@@ -175,6 +176,7 @@ void Flow::storeSettings()
     s.setValue("running", settings.running);
     s.setValue("target", settings.target);
     s.setValue("xsetbg", settings.xsetbg);
+    s.sync();
 }
 
 void Flow::fetchSettings()
@@ -247,8 +249,12 @@ void Flow::changeOneWall()
     std::uniform_int_distribution<int> dist(0, items.size()-1);
     int index = dist(rgen);
     QString srcfname = items.at(index);
-    QStringList args;
+    QString rs(targetString);
+    rs.append("^");
+    QString rs2(targetString);
+    rs2.append("+0+0");
     // convert to linear space
+    QStringList args;
     args << srcfname << "-colorspace" << "RGB";
     switch (settings.scale) {
     case ScaledProportions:
@@ -259,9 +265,13 @@ void Flow::changeOneWall()
         break;
     case ScaledCropped:
         // scale to cover
-        args << "-resize" << targetString + "^"
+        args << "-resize" << rs
              << "-gravity" << "center"
-             << "-crop" << targetString + "+0+0";
+             << "-crop" << rs2
+             << "-write" << "mpr:src" << "+delete"
+             << "-background" << "rgba(255,255,255)"
+             << "-size" << targetString
+             << "mpr:src";
         break;
     case TiledNotScaled:
         // tile oversize for screen, then crop  (fairly expensive tbh)
