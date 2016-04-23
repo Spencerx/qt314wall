@@ -33,7 +33,6 @@ class MainWindow;
 class MainWindow : public QDialog
 {
     Q_OBJECT
-
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
