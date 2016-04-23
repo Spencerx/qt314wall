@@ -63,6 +63,13 @@ Flow::Flow(QObject *parent) : QObject(parent),
     connect(a, &QAction::triggered, this, &Flow::nextImage_triggered);
     ctxmenu->addAction(a);
 
+    ctxmenu->addSeparator();
+
+    a = new QAction(this);
+    a->setText(tr("Exit"));
+    connect(a, &QAction::triggered, qApp, &QApplication::quit);
+    ctxmenu->addAction(a);
+
     sysicon->setContextMenu(ctxmenu);
 
     window = new MainWindow();
