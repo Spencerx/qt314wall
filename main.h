@@ -17,6 +17,7 @@ public:
     ~Flow();
 
     void run();
+    void removeActiveFile();
 
 private slots:
     void show_triggered();
@@ -37,6 +38,7 @@ private:
     QStringList items;
     QString destfolder;
     QString targetString;
+    QString activeFilename;
     std::random_device rseed;
     std::mt19937 rgen;
 

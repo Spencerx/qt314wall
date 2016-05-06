@@ -7,6 +7,7 @@
 #include <QTextStream>
 #include <QDir>
 #include <QDebug>
+#include <QUuid>
 
 static QString configFolder;
 
@@ -85,6 +86,7 @@ Flow::Flow(QObject *parent) : QObject(parent),
 
 Flow::~Flow()
 {
+    removeActiveFile();
     if (ctxmenu)    delete ctxmenu;
     if (sysicon)    delete sysicon;
     if (window)     delete window;
@@ -102,6 +104,11 @@ void Flow::run()
     window->setData(settings);
     sysicon->show();
     changeOneWall();
+}
+
+void Flow::removeActiveFile()
+{
+    QFile(this->destfolder + activeFilename).remove();
 }
 
 void Flow::show_triggered()
@@ -149,23 +156,21 @@ void Flow::changeWall()
 
 void Flow::changeWallConvertFinished(int exitCode)
 {
-    QFile org("/dev/shm/qt314wall-tempimage.png");
-    auto rmcp = [&](const char *name) {
-        QFile(this->destfolder + name).remove();
-        org.copy(this->destfolder + name);
-    };
-
-    if (!exitCode) {
-        rmcp("image.png");
-        rmcp("image2.png");
-        org.remove();
-        if (settings.xsetbg) {
-            QProcess::startDetached("xsetbg", QStringList() <<
-                                    this->destfolder + "image.png");
-        }
-    } else {
+    if (exitCode) {
         qDebug() << converter->readAllStandardError();
+        return;
     }
+
+    QFile org("/dev/shm/qt314wall-tempimage.png");
+    std::uniform_int_distribution<uint64_t> dist(0, (uint64_t)-1ll);
+    QString filename = QString("%1.png").arg(dist(rgen));
+    org.copy(this->destfolder + filename);
+    removeActiveFile();
+    org.remove();
+    activeFilename = filename;
+    if (settings.xsetbg)
+        QProcess::startDetached("xsetbg", QStringList() <<
+                                this->destfolder + activeFilename);
 }
 
 void Flow::storeSettings()
