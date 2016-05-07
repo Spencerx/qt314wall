@@ -43,7 +43,7 @@ Flow::Flow(QObject *parent) : QObject(parent),
     QAction *a;
 
     sysicon = new QSystemTrayIcon(this);
-    sysicon->setIcon(QIcon(":/images/clock.png"));
+    sysicon->setIcon(QIcon(":/images/clock2.png"));
     sysicon->setToolTip(tr("Cutie-pie Wallpaper Changer"));
 
     ctxmenu = new QMenu();
