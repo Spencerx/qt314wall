@@ -24,7 +24,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::setData(const dialogdata &d)
 {
+    ui->sourceImageList->setChecked(d.list);
+    ui->sourceFolder->setChecked(!d.list);
     ui->listfile->setText(d.listfile);
+    ui->fileFolder->setText(d.fileFolder);
     ui->hrs->setValue(d.hr);
     ui->min->setValue(d.mn);
     ui->sec->setValue(d.sc);
@@ -44,7 +47,9 @@ void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
     QDialogButtonBox::ButtonRole br = ui->buttonBox->buttonRole(button);
     if (br == QDialogButtonBox::AcceptRole || br == QDialogButtonBox::ApplyRole) {
         dialogdata d;
+        d.list = ui->sourceImageList->isChecked();
         d.listfile = ui->listfile->text();
+        d.fileFolder = ui->fileFolder->text();
         d.hr = ui->hrs->value();
         d.mn = ui->min->value();
         d.sc = ui->sec->value();
@@ -71,6 +76,19 @@ void MainWindow::on_listfileBrowse_clicked()
     qfd->selectFile(ui->listfile->text());
     connect(qfd, &QFileDialog::fileSelected, [this](const QString &selected) {
         this->ui->listfile->setText(selected);
+    });
+    qfd->show();
+}
+
+void MainWindow::on_fileFolderBrowse_clicked()
+{
+    QFileDialog *qfd = new QFileDialog(this);
+    qfd->setFileMode(QFileDialog::DirectoryOnly);
+    qfd->setAttribute(Qt::WA_DeleteOnClose);
+    qfd->setWindowTitle(tr("Open Folder"));
+    qfd->selectFile(ui->fileFolder->text());
+    connect(qfd, &QFileDialog::fileSelected, [this](const QString &selected) {
+        this->ui->fileFolder->setText(selected);
     });
     qfd->show();
 }

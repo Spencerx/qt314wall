@@ -176,7 +176,9 @@ void Flow::changeWallConvertFinished(int exitCode)
 void Flow::storeSettings()
 {
     QSettings s("qt314wall", "qt314wall");
+    s.setValue("list", settings.list);
     s.setValue("listfile", settings.listfile);
+    s.setValue("filefolder", settings.fileFolder);
     s.setValue("hours", settings.hr);
     s.setValue("minutes", settings.mn);
     s.setValue("seconds", settings.sc);
@@ -194,7 +196,9 @@ void Flow::storeSettings()
 void Flow::fetchSettings()
 {
     QSettings s("qt314wall", "qt314wall");
+    settings.list = s.value("list", true).toBool();
     settings.listfile = s.value("listfile").toString();
+    settings.fileFolder = s.value("filefolder").toString();
     settings.hr = s.value("hours").toInt();
     settings.mn = s.value("minutes").toInt();
     settings.sc = s.value("seconds", 10).toInt();
@@ -210,14 +214,22 @@ void Flow::fetchSettings()
 
 void Flow::updateItems()
 {
-    QFile f(settings.listfile);
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return;
+    if (settings.list) {
+        QFile f(settings.listfile);
+        if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            return;
+        }
+        items.clear();
+        while (!f.atEnd()) {
+            items.append(QString::fromUtf8(f.readLine()).trimmed());
+        }
+    } else {
+        QDir d(settings.fileFolder);
+        items.clear();
+        for (auto i : d.entryInfoList({"*.jpg", "*.png"}, QDir::Files))
+            items.append(i.absoluteFilePath());
     }
-    items.clear();
-    while (!f.atEnd()) {
-        items.append(QString::fromUtf8(f.readLine()).trimmed());
-    }
+
 }
 
 void Flow::updateTimerInterval()

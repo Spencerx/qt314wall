@@ -10,7 +10,9 @@ enum Gravity { North, NorthEast, East, SouthEast, South, SouthWest, West,
 enum Folder { ConfigFolder, ShmFolder, TmpFolder };
 
 struct dialogdata {
+    bool list;
     QString listfile;
+    QString fileFolder;
     int hr, mn, sc;
     QColor bgcolor;
     bool multiply;
@@ -47,6 +49,8 @@ private slots:
     void on_buttonBox_clicked(QAbstractButton *button);
 
     void on_listfileBrowse_clicked();
+
+    void on_fileFolderBrowse_clicked();
 
     void on_bgcolorSelect_clicked();
 
