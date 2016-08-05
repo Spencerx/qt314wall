@@ -176,7 +176,8 @@ void Flow::changeWallConvertFinished(int exitCode)
 void Flow::storeSettings()
 {
     QSettings s("qt314wall", "qt314wall");
-    s.setValue("list", settings.list);
+    s.setValue("source", settings.source);
+    s.setValue("image", settings.image);
     s.setValue("listfile", settings.listfile);
     s.setValue("filefolder", settings.fileFolder);
     s.setValue("hours", settings.hr);
@@ -196,7 +197,8 @@ void Flow::storeSettings()
 void Flow::fetchSettings()
 {
     QSettings s("qt314wall", "qt314wall");
-    settings.list = s.value("list", true).toBool();
+    settings.source = static_cast<Source>(s.value("source", ImageSource).toInt());
+    settings.image = s.value("image").toString();
     settings.listfile = s.value("listfile").toString();
     settings.fileFolder = s.value("filefolder").toString();
     settings.hr = s.value("hours").toInt();
@@ -214,7 +216,13 @@ void Flow::fetchSettings()
 
 void Flow::updateItems()
 {
-    if (settings.list) {
+    switch (settings.source) {
+    case ImageSource: {
+        items.clear();
+        items.append(settings.image);
+        break;
+    }
+    case ListSource: {
         QFile f(settings.listfile);
         if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
             return;
@@ -223,13 +231,16 @@ void Flow::updateItems()
         while (!f.atEnd()) {
             items.append(QString::fromUtf8(f.readLine()).trimmed());
         }
-    } else {
+        break;
+    }
+    case FolderSource: {
         QDir d(settings.fileFolder);
         items.clear();
         for (auto i : d.entryInfoList({"*.jpg", "*.png"}, QDir::Files))
             items.append(i.absoluteFilePath());
+        break;
     }
-
+    }
 }
 
 void Flow::updateTimerInterval()
@@ -272,7 +283,10 @@ void Flow::changeOneWall()
     }
     std::uniform_int_distribution<int> dist(0, items.size()-1);
     int index = dist(rgen);
-    QString srcfname = items.at(index);
+    QString srcfname = items.value(index);
+    QFileInfo inspector(srcfname);
+    if (!inspector.isReadable() || !inspector.isFile())
+        return;
     QString rs(targetString);
     rs.append("^");
     QString rs2(targetString);

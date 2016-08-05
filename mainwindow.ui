@@ -30,17 +30,7 @@
       <string>Source</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QRadioButton" name="sourceImageList">
-        <property name="text">
-         <string>I&amp;mage List</string>
-        </property>
-        <property name="checked">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="0" column="1">
+      <item row="1" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_7">
         <item>
          <widget class="QLineEdit" name="listfile">
@@ -58,14 +48,14 @@
         </item>
        </layout>
       </item>
-      <item row="1" column="0">
+      <item row="2" column="0">
        <widget class="QRadioButton" name="sourceFolder">
         <property name="text">
-         <string>Folder</string>
+         <string>Fo&amp;lder</string>
         </property>
        </widget>
       </item>
-      <item row="1" column="1">
+      <item row="2" column="1">
        <layout class="QHBoxLayout" name="horizontalLayout_8">
         <item>
          <widget class="QLineEdit" name="fileFolder">
@@ -76,6 +66,41 @@
         </item>
         <item>
          <widget class="QPushButton" name="fileFolderBrowse">
+          <property name="text">
+           <string>Browse...</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item row="1" column="0">
+       <widget class="QRadioButton" name="sourceImageList">
+        <property name="text">
+         <string>I&amp;mage List</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QRadioButton" name="sourceImage">
+        <property name="text">
+         <string>Single Image</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QLineEdit" name="image">
+          <property name="placeholderText">
+           <string>Location of image</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="imageBrowse">
           <property name="text">
            <string>Browse...</string>
           </property>
@@ -449,6 +474,32 @@
   </layout>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>sourceImage</tabstop>
+  <tabstop>image</tabstop>
+  <tabstop>imageBrowse</tabstop>
+  <tabstop>sourceImageList</tabstop>
+  <tabstop>listfile</tabstop>
+  <tabstop>listfileBrowse</tabstop>
+  <tabstop>sourceFolder</tabstop>
+  <tabstop>fileFolder</tabstop>
+  <tabstop>fileFolderBrowse</tabstop>
+  <tabstop>hrs</tabstop>
+  <tabstop>min</tabstop>
+  <tabstop>sec</tabstop>
+  <tabstop>bgcolor</tabstop>
+  <tabstop>bgcolorSelect</tabstop>
+  <tabstop>multiply</tabstop>
+  <tabstop>scale</tabstop>
+  <tabstop>gravity</tabstop>
+  <tabstop>targetWidth</tabstop>
+  <tabstop>targetHeight</tabstop>
+  <tabstop>targetScreen</tabstop>
+  <tabstop>targetDesktop</tabstop>
+  <tabstop>folder</tabstop>
+  <tabstop>running</tabstop>
+  <tabstop>xsetbg</tabstop>
+ </tabstops>
  <resources>
   <include location="resource.qrc"/>
  </resources>

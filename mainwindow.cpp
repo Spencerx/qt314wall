@@ -24,8 +24,10 @@ MainWindow::~MainWindow()
 
 void MainWindow::setData(const dialogdata &d)
 {
-    ui->sourceImageList->setChecked(d.list);
-    ui->sourceFolder->setChecked(!d.list);
+    ui->sourceImage->setChecked(d.source == ImageSource);
+    ui->sourceImageList->setChecked(d.source == ListSource);
+    ui->sourceFolder->setChecked(d.source == FolderSource);
+    ui->image->setText(d.image);
     ui->listfile->setText(d.listfile);
     ui->fileFolder->setText(d.fileFolder);
     ui->hrs->setValue(d.hr);
@@ -40,6 +42,7 @@ void MainWindow::setData(const dialogdata &d)
     ui->targetWidth->setValue(d.target.width());
     ui->targetHeight->setValue(d.target.height());
     ui->xsetbg->setChecked(d.xsetbg);
+    updateBgcolorWidgetSheet();
 }
 
 void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
@@ -47,7 +50,9 @@ void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
     QDialogButtonBox::ButtonRole br = ui->buttonBox->buttonRole(button);
     if (br == QDialogButtonBox::AcceptRole || br == QDialogButtonBox::ApplyRole) {
         dialogdata d;
-        d.list = ui->sourceImageList->isChecked();
+        d.source = ui->sourceImage->isChecked() ? ImageSource :
+                   ui->sourceImageList->isChecked() ? ListSource : FolderSource;
+        d.image = ui->image->text();
         d.listfile = ui->listfile->text();
         d.fileFolder = ui->fileFolder->text();
         d.hr = ui->hrs->value();
@@ -66,6 +71,18 @@ void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
     if (br == QDialogButtonBox::AcceptRole || br == QDialogButtonBox::RejectRole) {
         this->hide();
     }
+}
+
+void MainWindow::on_imageBrowse_clicked()
+{
+    QFileDialog *qfd = new QFileDialog(this);
+    qfd->setAttribute(Qt::WA_DeleteOnClose);
+    qfd->setWindowTitle(tr("Open Image"));
+    qfd->selectFile(ui->image->text());
+    connect(qfd, &QFileDialog::fileSelected, [this](const QString &selected) {
+        this->ui->image->setText(selected);
+    });
+    qfd->show();
 }
 
 void MainWindow::on_listfileBrowse_clicked()

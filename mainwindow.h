@@ -4,13 +4,15 @@
 #include <QDialog>
 #include <QAbstractButton>
 
+enum Source { ImageSource, ListSource, FolderSource };
 enum Scaling { ScaledProportions, ScaledCropped, TiledNotScaled, NotScaled };
 enum Gravity { North, NorthEast, East, SouthEast, South, SouthWest, West,
                NorthWest, Center };
 enum Folder { ConfigFolder, ShmFolder, TmpFolder };
 
 struct dialogdata {
-    bool list;
+    Source source;
+    QString image;
     QString listfile;
     QString fileFolder;
     int hr, mn, sc;
@@ -47,6 +49,8 @@ signals:
 private slots:
 
     void on_buttonBox_clicked(QAbstractButton *button);
+
+    void on_imageBrowse_clicked();
 
     void on_listfileBrowse_clicked();
 
