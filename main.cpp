@@ -67,6 +67,13 @@ Flow::Flow(QObject *parent) : QObject(parent),
     ctxmenu->addSeparator();
 
     a = new QAction(this);
+    a->setText(tr("Open Image"));
+    connect(a, &QAction::triggered, this, &Flow::openImage_triggered);
+    ctxmenu->addAction(a);
+
+    ctxmenu->addSeparator();
+
+    a = new QAction(this);
     a->setText(tr("Exit"));
     connect(a, &QAction::triggered, qApp, &QApplication::quit);
     ctxmenu->addAction(a);
@@ -128,6 +135,11 @@ void Flow::enabled_toggled(bool state)
     } else {
         timer->stop();
     }
+}
+
+void Flow::openImage_triggered()
+{
+    QProcess::startDetached("xdg-open", QStringList() << activeSource);
 }
 
 void Flow::nextImage_triggered()
@@ -287,13 +299,14 @@ void Flow::changeOneWall()
     QFileInfo inspector(srcfname);
     if (!inspector.isReadable() || !inspector.isFile())
         return;
+    activeSource = srcfname;
     QString rs(targetString);
     rs.append("^");
     QString rs2(targetString);
     rs2.append("+0+0");
     // convert to linear space
     QStringList args;
-    args << srcfname << "-colorspace" << "RGB";
+    args << activeSource << "-colorspace" << "RGB";
     switch (settings.scale) {
     case ScaledProportions:
         // scale to fit

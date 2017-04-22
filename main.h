@@ -22,6 +22,7 @@ public:
 private slots:
     void show_triggered();
     void enabled_toggled(bool state);
+    void openImage_triggered();
     void nextImage_triggered();
     void dialogDataChanged(const dialogdata &d);
     void changeWall();
@@ -39,6 +40,7 @@ private:
     QString destfolder;
     QString targetString;
     QString activeFilename;
+    QString activeSource;
     std::random_device rseed;
     std::mt19937 rgen;
 
