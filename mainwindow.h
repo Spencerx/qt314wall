@@ -4,7 +4,7 @@
 #include <QDialog>
 #include <QAbstractButton>
 
-enum Source { ImageSource, ListSource, FolderSource };
+enum Source { ImageSource, ListSource, FolderSource, DropSource };
 enum Scaling { ScaledProportions, ScaledCropped, TiledNotScaled, NotScaled };
 enum Gravity { North, NorthEast, East, SouthEast, South, SouthWest, West,
                NorthWest, Center };
@@ -15,6 +15,7 @@ struct dialogdata {
     QString image;
     QString listfile;
     QString fileFolder;
+    QStringList droppedFiles;
     int hr, mn, sc;
     QColor bgcolor;
     bool multiply;
@@ -46,6 +47,10 @@ public:
 signals:
     void dataChanged(const dialogdata &d);
 
+protected:
+    void dragEnterEvent(QDragEnterEvent *event);
+    void dropEvent(QDropEvent *event);
+
 private slots:
 
     void on_buttonBox_clicked(QAbstractButton *button);
@@ -68,6 +73,7 @@ private:
     Ui::MainWindow *ui;
 
     void updateBgcolorWidgetSheet();
+    QStringList lastDroppedFiles;
 };
 
 #endif // MAINWINDOW_H

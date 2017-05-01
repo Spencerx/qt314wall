@@ -192,6 +192,7 @@ void Flow::storeSettings()
     s.setValue("image", settings.image);
     s.setValue("listfile", settings.listfile);
     s.setValue("filefolder", settings.fileFolder);
+    s.setValue("droppedfiles", settings.droppedFiles);
     s.setValue("hours", settings.hr);
     s.setValue("minutes", settings.mn);
     s.setValue("seconds", settings.sc);
@@ -213,6 +214,7 @@ void Flow::fetchSettings()
     settings.image = s.value("image").toString();
     settings.listfile = s.value("listfile").toString();
     settings.fileFolder = s.value("filefolder").toString();
+    settings.droppedFiles = s.value("droppedfiles").toStringList();
     settings.hr = s.value("hours").toInt();
     settings.mn = s.value("minutes").toInt();
     settings.sc = s.value("seconds", 10).toInt();
@@ -250,6 +252,10 @@ void Flow::updateItems()
         items.clear();
         for (auto i : d.entryInfoList({"*.jpg", "*.png"}, QDir::Files))
             items.append(i.absoluteFilePath());
+        break;
+    }
+    case DropSource: {
+        items = settings.droppedFiles;
         break;
     }
     }

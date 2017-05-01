@@ -4,6 +4,8 @@
 #include <QColorDialog>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QDragEnterEvent>
+#include <QMimeData>
 
 const char *dialogdata::gravityStrings[] = {
     "north", "northeast", "east", "southeast", "south", "southwest", "west",
@@ -27,9 +29,11 @@ void MainWindow::setData(const dialogdata &d)
     ui->sourceImage->setChecked(d.source == ImageSource);
     ui->sourceImageList->setChecked(d.source == ListSource);
     ui->sourceFolder->setChecked(d.source == FolderSource);
+    ui->sourceDrop->setChecked(d.source == DropSource);
     ui->image->setText(d.image);
     ui->listfile->setText(d.listfile);
     ui->fileFolder->setText(d.fileFolder);
+    lastDroppedFiles = d.droppedFiles;
     ui->hrs->setValue(d.hr);
     ui->min->setValue(d.mn);
     ui->sec->setValue(d.sc);
@@ -45,16 +49,38 @@ void MainWindow::setData(const dialogdata &d)
     updateBgcolorWidgetSheet();
 }
 
+void MainWindow::dragEnterEvent(QDragEnterEvent *event)
+{
+    if (event->mimeData()->hasUrls())
+            event->acceptProposedAction();
+}
+
+void MainWindow::dropEvent(QDropEvent *event)
+{
+    if (!event->mimeData()->hasUrls())
+        return;
+
+    lastDroppedFiles.clear();
+    for (const QUrl &url : event->mimeData()->urls()) {
+        if (url.isLocalFile())
+            lastDroppedFiles.append(url.toLocalFile());
+    }
+    ui->sourceDrop->setChecked(true);
+}
+
 void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
 {
     QDialogButtonBox::ButtonRole br = ui->buttonBox->buttonRole(button);
     if (br == QDialogButtonBox::AcceptRole || br == QDialogButtonBox::ApplyRole) {
         dialogdata d;
         d.source = ui->sourceImage->isChecked() ? ImageSource :
-                   ui->sourceImageList->isChecked() ? ListSource : FolderSource;
+                   ui->sourceImageList->isChecked() ? ListSource :
+                   ui->sourceFolder->isChecked() ? FolderSource :
+                                                   DropSource;
         d.image = ui->image->text();
         d.listfile = ui->listfile->text();
         d.fileFolder = ui->fileFolder->text();
+        d.droppedFiles = lastDroppedFiles;
         d.hr = ui->hrs->value();
         d.mn = ui->min->value();
         d.sc = ui->sec->value();
