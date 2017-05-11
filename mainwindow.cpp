@@ -46,6 +46,7 @@ void MainWindow::setData(const dialogdata &d)
     ui->targetWidth->setValue(d.target.width());
     ui->targetHeight->setValue(d.target.height());
     ui->xsetbg->setChecked(d.xsetbg);
+    ui->plasmaDBus->setChecked(d.plasmaDBus);
     updateBgcolorWidgetSheet();
 }
 
@@ -92,6 +93,7 @@ void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
         d.running = ui->running->isChecked();
         d.target = QSize(ui->targetWidth->value(), ui->targetHeight->value());
         d.xsetbg = ui->xsetbg->isChecked();
+        d.plasmaDBus = ui->plasmaDBus->isChecked();
         emit dataChanged(d);
     }
     if (br == QDialogButtonBox::AcceptRole || br == QDialogButtonBox::RejectRole) {

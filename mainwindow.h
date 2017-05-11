@@ -25,6 +25,7 @@ struct dialogdata {
     bool running;
     QSize target;
     bool xsetbg;
+    bool plasmaDBus;
 
     dialogdata() : listfile(), hr(0), mn(0), sc(10), bgcolor("#303030"),
         multiply(true), scale(ScaledProportions), weight(SouthEast) { }

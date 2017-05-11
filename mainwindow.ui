@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>452</width>
-    <height>610</height>
+    <height>640</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -417,7 +417,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="label_4">
         <property name="text">
-         <string>Running</string>
+         <string>Timeout</string>
         </property>
        </widget>
       </item>
@@ -470,6 +470,20 @@
        <widget class="QLabel" name="label_15">
         <property name="text">
          <string>Legacy</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0">
+       <widget class="QLabel" name="label_16">
+        <property name="text">
+         <string>Plasma</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QCheckBox" name="plasmaDBus">
+        <property name="text">
+         <string>Update image-plugin wallpaper through DBus</string>
         </property>
        </widget>
       </item>

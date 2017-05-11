@@ -8,6 +8,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QUuid>
+#include <QDBusInterface>
 
 static QString configFolder;
 
@@ -183,6 +184,19 @@ void Flow::changeWallConvertFinished(int exitCode)
     if (settings.xsetbg)
         QProcess::startDetached("xsetbg", QStringList() <<
                                 this->destfolder + activeFilename);
+    if (settings.plasmaDBus) {
+        QDBusInterface plasma("org.kde.plasmashell",
+                              "/PlasmaShell",
+                              "org.kde.PlasmaShell");
+        if (plasma.isValid()) {
+            QString file(destfolder + activeFilename);
+            file.replace('"', "\\\"");
+            QFile scriptFile(":/text/plasmascript.txt");
+            scriptFile.open(QIODevice::ReadOnly | QIODevice::Text);
+            QString script = QString::fromLocal8Bit(scriptFile.readAll()).arg(file);
+            plasma.call("evaluateScript", script);
+        }
+    }
 }
 
 void Flow::storeSettings()
@@ -204,6 +218,7 @@ void Flow::storeSettings()
     s.setValue("running", settings.running);
     s.setValue("target", settings.target);
     s.setValue("xsetbg", settings.xsetbg);
+    s.setValue("plasmadbus", settings.plasmaDBus);
     s.sync();
 }
 
@@ -226,6 +241,7 @@ void Flow::fetchSettings()
     settings.running = s.value("running", false).toBool();
     settings.target = s.value("target", QSize(1920,1080)).toSize();
     settings.xsetbg = s.value("xsetbg", false).toBool();
+    settings.plasmaDBus = s.value("plasmadbus", true).toBool();
 }
 
 void Flow::updateItems()
