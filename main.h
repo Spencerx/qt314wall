@@ -1,6 +1,7 @@
 #ifndef MAIN_H
 #define MAIN_H
 #include <QSystemTrayIcon>
+#include <QLocalServer>
 #include <QAction>
 #include <QMenu>
 #include <QSettings>
@@ -16,10 +17,12 @@ public:
     Flow(QObject *parent = NULL);
     ~Flow();
 
+    static bool passToPrevious(const QStringList &files);
     void run();
     void removeActiveFile();
 
 private slots:
+    void server_newConnection();
     void show_triggered();
     void enabled_toggled(bool state);
     void openImage_triggered();
@@ -31,6 +34,7 @@ private slots:
 private:
     MainWindow *window;
     QSystemTrayIcon *sysicon;
+    QLocalServer server;
     QMenu *ctxmenu;
     QTimer *timer;
     QProcess *converter;
@@ -44,6 +48,8 @@ private:
     std::random_device rseed;
     std::mt19937 rgen;
 
+    void setupServer();
+    bool maybeSetToFiles(const QStringList &candidates, const QString &workingFolder = QString());
     void storeSettings();
     void fetchSettings();
 
@@ -53,6 +59,7 @@ private:
     void updateTargetString();
     void updateEnabled();
     void changeOneWall();
+
     QString calcTileSize(const QString &srcfname);
 };
 

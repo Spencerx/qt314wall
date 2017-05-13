@@ -9,27 +9,31 @@
 #include <QDebug>
 #include <QUuid>
 #include <QDBusInterface>
+#include <QLocalSocket>
+#include <QUrl>
 
-static QString configFolder;
+static QString configFolderPath;
+static const char serverName[] = "cmdrkotori.qt314wall";
+static const int serverTimeout = 1000;
+static const char orgDomain[] = "cmdrkotori.github.com";
+static const char configFolderTitle[] = "qt314wall";
+static const char workingDirNameShm[] = "/dev/shm/qt314-wallpaper";
+static const char workingDirNameTmp[] = "/tmp/qt314-wallpaper";
 
 int main(int argc, char *argv[])
 {
-    QApplication::setOrganizationDomain("cmdrkotori.github.com");
+    QApplication::setOrganizationDomain(orgDomain);
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QApplication a(argc, argv);
+    if (Flow::passToPrevious(a.arguments().mid(1)))
+        return 0;
 
-    // one instance only!
-    configFolder = QFileInfo(QSettings("qt314wall", "qt314wall").fileName()).absolutePath() + "/";
-    QLockFile lock("/dev/shm/qt314wall.lockfile");
-    if (!lock.tryLock()) {
-        QMessageBox::critical(NULL, QObject::tr("Qt314Wall"), QObject::tr("Application already running (Delete lockfile?)"));
-        return 1;
-    }
+    configFolderPath = QFileInfo(QSettings(configFolderTitle, configFolderTitle).fileName()).absolutePath() + "/";
 
     // prep slideshow directories
-    QDir("/dev/shm").mkdir("qt314-wallpaper");
-    QDir("/tmp").mkdir("qt314-wallpaper");
+    QDir("/").mkpath(workingDirNameShm);
+    QDir("/").mkpath(workingDirNameTmp);
 
     Flow f;
     f.run();
@@ -101,9 +105,27 @@ Flow::~Flow()
     if (timer)      delete timer;
 }
 
+bool Flow::passToPrevious(const QStringList &files)
+{
+    QLocalSocket sock;
+    sock.setServerName(serverName);
+    sock.connectToServer(QIODevice::ReadWrite | QIODevice::Text);
+    if (!sock.waitForConnected(serverTimeout)) {
+        return false;
+    }
+    QStringList toSend;
+    toSend.append(QDir::currentPath());
+    toSend.append(files);
+    sock.write(toSend.join('\n').toUtf8());
+    return sock.waitForBytesWritten(serverTimeout);
+}
+
 void Flow::run()
 {
+    setupServer();
     fetchSettings();
+    if (QApplication::arguments().count() > 1)
+        maybeSetToFiles(QApplication::arguments().mid(1), QDir::currentPath());
     updateItems();
     updateTimerInterval();
     updateDestFolder();
@@ -117,6 +139,27 @@ void Flow::run()
 void Flow::removeActiveFile()
 {
     QFile(this->destfolder + activeFilename).remove();
+}
+
+void Flow::server_newConnection()
+{
+    QLocalSocket *sock = server.nextPendingConnection();
+    if (!sock)
+        return;
+    sock->waitForReadyRead(serverTimeout * 2);
+    QStringList lines = QString::fromUtf8(sock->readAll()).split('\n');
+    delete sock;
+
+    if (lines.count() < 2) {
+        window->show();
+        window->activateWindow();
+        return;
+    }
+    if (!maybeSetToFiles(lines.mid(1), lines.first()))
+        return;
+
+    window->setData(settings);
+    dialogDataChanged(settings);
 }
 
 void Flow::show_triggered()
@@ -197,6 +240,30 @@ void Flow::changeWallConvertFinished(int exitCode)
             plasma.call("evaluateScript", script);
         }
     }
+}
+
+void Flow::setupServer()
+{
+    connect(&server, &QLocalServer::newConnection, this, &Flow::server_newConnection);
+    server.listen(serverName);
+}
+
+bool Flow::maybeSetToFiles(const QStringList &candidates, const QString &workingFolder)
+{
+    QStringList files;
+    QStringList validExtensions({ "jpg", "jpeg", "jpe", "png", "bmp", "dib", "gif" });
+    for (const QString &s : candidates) {
+        QString filename = QUrl::fromUserInput(s, workingFolder).toLocalFile();
+        QFileInfo fileinfo(filename);
+        if (fileinfo.exists() && validExtensions.contains(fileinfo.suffix().toLower()))
+            files.append(filename);
+    }
+    if (files.count() < 1)
+        return false;
+    settings.droppedFiles = files;
+    settings.source = DropSource;
+    return true;
+
 }
 
 void Flow::storeSettings()
@@ -287,14 +354,14 @@ void Flow::updateDestFolder()
 {
     switch (settings.folder) {
     case ConfigFolder:
-        destfolder = configFolder;
+        destfolder = configFolderPath;
         break;
     case ShmFolder:
-        destfolder = "/dev/shm/qt314-wallpaper/";
+        destfolder = workingDirNameShm;
         break;
     case TmpFolder:
     default:
-        destfolder = "/tmp/qt314-wallpaper/";
+        destfolder = workingDirNameTmp;
     }
 }
 
