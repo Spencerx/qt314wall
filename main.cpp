@@ -26,6 +26,13 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QApplication a(argc, argv);
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
+        QMessageBox::critical(nullptr, "Tray not found",
+                              "This program requires a system tray, but your "
+                              "desktop environment does not support this "
+                              "functionality. ");
+        return 1;
+    }
     if (Flow::passToPrevious(a.arguments().mid(1)))
         return 0;
 
