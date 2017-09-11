@@ -10,6 +10,7 @@
 #include <QProcess>
 #include <ext/random>
 #include "mainwindow.h"
+#include "source.h"
 
 class Flow : public QObject {
     Q_OBJECT
@@ -24,10 +25,12 @@ public:
 private slots:
     void server_newConnection();
     void show_triggered();
-    void enabled_toggled(bool state);
+    void enabled_triggered(bool state);
     void openImage_triggered();
+    void openSource_triggered();
     void nextImage_triggered();
     void dialogDataChanged(const dialogdata &d);
+    void source_nextFile(QString file);
     void changeWall();
     void changeWallConvertFinished(int exitCode);
 
@@ -40,24 +43,34 @@ private:
     QProcess *converter;
     QAction *enableAction;
     dialogdata settings;
-    QStringList items;
+    QString item;
     QString destfolder;
     QString targetString;
-    QString activeFilename;
-    QString activeSource;
+    QString generatedFilename;
+    QString activeSourceFilename;
     std::random_device rseed;
     std::mt19937 rgen;
 
+    bool requestingSource;
+    Sources::FileSource *activeSource;
+    Sources::FileSource *fileSource;
+    Sources::FileListSource *fileListSource;
+    Sources::FolderSource *folderSource;
+    Sources::DropSource *dropSource;
+    QList<Sources::WebSource*> webSources;
+
+    void setupSources();
     void setupServer();
     bool maybeSetToFiles(const QStringList &candidates, const QString &workingFolder = QString());
     void storeSettings();
     void fetchSettings();
 
-    void updateItems();
+    void requestNextImage();
     void updateTimerInterval();
     void updateDestFolder();
     void updateTargetString();
     void updateEnabled();
+    void updateSources();
     void changeOneWall();
 
     QString calcTileSize(const QString &srcfname);

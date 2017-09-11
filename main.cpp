@@ -10,6 +10,7 @@
 #include <QUuid>
 #include <QDBusInterface>
 #include <QLocalSocket>
+#include <QDesktopServices>
 #include <QUrl>
 
 static QString configFolderPath;
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
 
 Flow::Flow(QObject *parent) : QObject(parent),
     window(NULL), sysicon(NULL), ctxmenu(NULL), timer(NULL),
-    converter(NULL), rgen(rseed())
+    converter(NULL), rgen(rseed()), requestingSource(false)
 {
     QAction *a;
 
@@ -68,7 +69,7 @@ Flow::Flow(QObject *parent) : QObject(parent),
     enableAction = new QAction(this);
     enableAction->setText(tr("Enable"));
     enableAction->setCheckable(true);
-    connect(enableAction, &QAction::toggled, this, &Flow::enabled_toggled);
+    connect(enableAction, &QAction::triggered, this, &Flow::enabled_triggered);
     ctxmenu->addAction(enableAction);
 
     a = new QAction(this);
@@ -81,6 +82,11 @@ Flow::Flow(QObject *parent) : QObject(parent),
     a = new QAction(this);
     a->setText(tr("Open Image"));
     connect(a, &QAction::triggered, this, &Flow::openImage_triggered);
+    ctxmenu->addAction(a);
+
+    a = new QAction(this);
+    a->setText(tr("Open Source"));
+    connect(a, &QAction::triggered, this, &Flow::openSource_triggered);
     ctxmenu->addAction(a);
 
     ctxmenu->addSeparator();
@@ -99,8 +105,7 @@ Flow::Flow(QObject *parent) : QObject(parent),
     connect(converter, SIGNAL(finished(int)), this, SLOT(changeWallConvertFinished(int)));
 
     timer = new QTimer(this);
-    connect(timer, &QTimer::timeout, this, &Flow::changeWall);
-    timer->start(10000);
+    connect(timer, &QTimer::timeout, this, &Flow::requestNextImage);
 }
 
 Flow::~Flow()
@@ -129,23 +134,24 @@ bool Flow::passToPrevious(const QStringList &files)
 
 void Flow::run()
 {
+    setupSources();
     setupServer();
     fetchSettings();
     if (QApplication::arguments().count() > 1)
         maybeSetToFiles(QApplication::arguments().mid(1), QDir::currentPath());
-    updateItems();
     updateTimerInterval();
     updateDestFolder();
     updateTargetString();
     updateEnabled();
+    updateSources();
+    requestNextImage();
     window->setData(settings);
     sysicon->show();
-    changeOneWall();
 }
 
 void Flow::removeActiveFile()
 {
-    QFile(this->destfolder + activeFilename).remove();
+    QFile(this->destfolder + generatedFilename).remove();
 }
 
 void Flow::server_newConnection()
@@ -176,13 +182,13 @@ void Flow::show_triggered()
     window->activateWindow();
 }
 
-void Flow::enabled_toggled(bool state)
+void Flow::enabled_triggered(bool state)
 {
     settings.running = state;
+    window->setRunning(state);
     storeSettings();
     if (state) {
-        updateTimerInterval();
-        changeOneWall();
+        requestNextImage();
     } else {
         timer->stop();
     }
@@ -190,31 +196,47 @@ void Flow::enabled_toggled(bool state)
 
 void Flow::openImage_triggered()
 {
-    QProcess::startDetached("xdg-open", QStringList() << activeSource);
+    QDesktopServices::openUrl(QUrl::fromLocalFile(activeSourceFilename));
+    //QProcess::startDetached("xdg-open", QStringList() << activeSourceFilename);
+}
+
+void Flow::openSource_triggered()
+{
+    QDesktopServices::openUrl(activeSource->source());
 }
 
 void Flow::nextImage_triggered()
 {
-    changeOneWall();
+    requestNextImage();
 }
 
 void Flow::dialogDataChanged(const dialogdata &d)
 {
     settings = d;
     storeSettings();
-    updateItems();
     updateTimerInterval();
     updateDestFolder();
     updateTargetString();
     updateEnabled();
-    changeOneWall();
+    updateSources();
+    requestNextImage();
+}
+
+void Flow::source_nextFile(QString file)
+{
+    requestingSource = false;
+    if (!file.isEmpty()) {
+        item = file;
+        changeOneWall();
+    }
+    updateTimerInterval();
 }
 
 void Flow::changeWall()
 {
     if (!settings.running)
         return;
-    changeOneWall();
+    requestNextImage();
 }
 
 void Flow::changeWallConvertFinished(int exitCode)
@@ -230,16 +252,16 @@ void Flow::changeWallConvertFinished(int exitCode)
     org.copy(this->destfolder + filename);
     removeActiveFile();
     org.remove();
-    activeFilename = filename;
+    generatedFilename = filename;
     if (settings.xsetbg)
         QProcess::startDetached("xsetbg", QStringList() <<
-                                this->destfolder + activeFilename);
+                                this->destfolder + generatedFilename);
     if (settings.plasmaDBus) {
         QDBusInterface plasma("org.kde.plasmashell",
                               "/PlasmaShell",
                               "org.kde.PlasmaShell");
         if (plasma.isValid()) {
-            QString file(destfolder + activeFilename);
+            QString file(destfolder + generatedFilename);
             file.replace('"', "\\\"");
             QFile scriptFile(":/text/plasmascript.txt");
             scriptFile.open(QIODevice::ReadOnly | QIODevice::Text);
@@ -247,6 +269,41 @@ void Flow::changeWallConvertFinished(int exitCode)
             plasma.call("evaluateScript", script);
         }
     }
+}
+
+void Flow::setupSources()
+{
+    auto sourceConnect = [this](Sources::FileSource *source) {
+        connect(source, &Sources::FileSource::nextFile,
+                this, &Flow::source_nextFile);
+    };
+
+    fileSource = new Sources::FileSource(this);
+    fileListSource = new Sources::FileListSource(this);
+    folderSource = new Sources::FolderSource(this);
+    dropSource = new Sources::DropSource(this);
+
+    sourceConnect(fileSource);
+    sourceConnect(fileListSource);
+    sourceConnect(folderSource);
+    sourceConnect(dropSource);
+    struct WebData {
+        QString title,hostname,apiPage;
+    };
+    QVector<WebData> data {
+        { "Konachan (safe)", "konachan.net", "/post.json" },
+        { "Konachan", "konachan.com", "/post.json" },
+        { "Danbooru", "danbooru.donmai.us", "/posts.json" }
+    };
+    for (auto &d : data) {
+        auto src = new Sources::WebSource(this);
+        src->setTitle(d.title);
+        src->setHost(d.hostname);
+        src->setApiPage(d.apiPage);
+        webSources.append(src);
+        sourceConnect(src);
+    }
+    window->setWebSources(webSources);
 }
 
 void Flow::setupServer()
@@ -270,7 +327,6 @@ bool Flow::maybeSetToFiles(const QStringList &candidates, const QString &working
     settings.droppedFiles = files;
     settings.source = DropSource;
     return true;
-
 }
 
 void Flow::storeSettings()
@@ -281,6 +337,8 @@ void Flow::storeSettings()
     s.setValue("listfile", settings.listfile);
     s.setValue("filefolder", settings.fileFolder);
     s.setValue("droppedfiles", settings.droppedFiles);
+    s.setValue("webfields", settings.webFields);
+    s.setValue("webindex", settings.webIndex);
     s.setValue("hours", settings.hr);
     s.setValue("minutes", settings.mn);
     s.setValue("seconds", settings.sc);
@@ -304,6 +362,8 @@ void Flow::fetchSettings()
     settings.listfile = s.value("listfile").toString();
     settings.fileFolder = s.value("filefolder").toString();
     settings.droppedFiles = s.value("droppedfiles").toStringList();
+    settings.webFields = s.value("webfields").toStringList();
+    settings.webIndex = s.value("webindex").toInt();
     settings.hr = s.value("hours").toInt();
     settings.mn = s.value("minutes").toInt();
     settings.sc = s.value("seconds", 10).toInt();
@@ -318,43 +378,42 @@ void Flow::fetchSettings()
     settings.plasmaDBus = s.value("plasmadbus", true).toBool();
 }
 
-void Flow::updateItems()
+void Flow::requestNextImage()
 {
+    if (requestingSource)
+        return;
+
+    timer->stop();
     switch (settings.source) {
-    case ImageSource: {
-        items.clear();
-        items.append(settings.image);
+    case ImageSource:
+        activeSource = fileSource;
+        break;
+    case ListSource:
+        activeSource = fileListSource;
+        break;
+    case FolderSource:
+        activeSource = folderSource;
+        break;
+    case DropSource:
+        activeSource = dropSource;
+        break;
+    case WebSource:
+        activeSource = webSources[settings.webIndex];
         break;
     }
-    case ListSource: {
-        QFile f(settings.listfile);
-        if (!f.open(QIODevice::ReadOnly | QIODevice::Text)) {
-            return;
-        }
-        items.clear();
-        while (!f.atEnd()) {
-            items.append(QString::fromUtf8(f.readLine()).trimmed());
-        }
-        break;
-    }
-    case FolderSource: {
-        QDir d(settings.fileFolder);
-        items.clear();
-        for (auto i : d.entryInfoList({"*.jpg", "*.png"}, QDir::Files))
-            items.append(i.absoluteFilePath());
-        break;
-    }
-    case DropSource: {
-        items = settings.droppedFiles;
-        break;
-    }
+    if (activeSource) {
+        requestingSource = true;
+        activeSource->fetchFile();
     }
 }
 
 void Flow::updateTimerInterval()
 {
     timer->stop();
-    timer->start(std::max(10000, (settings.hr*3600000) + (settings.mn*60000) + (settings.sc*1000)));
+    if (settings.running) {
+        qDebug() << "turned on timer";
+        timer->start(std::max(10000, (settings.hr*3600000) + (settings.mn*60000) + (settings.sc*1000)));
+    }
 }
 
 void Flow::updateDestFolder()
@@ -383,26 +442,37 @@ void Flow::updateEnabled()
     enableAction->setChecked(settings.running);
 }
 
+void Flow::updateSources()
+{
+    fileSource->setPath(settings.image);
+    fileListSource->setPath(settings.listfile);
+    folderSource->setPath(settings.fileFolder);
+    dropSource->setFiles(settings.droppedFiles);
+
+    int i = 0;
+    for (auto &tags : settings.webFields) {
+        if (i < webSources.count()) {
+            webSources[i]->setWorkFolder(destfolder);
+            webSources[i]->setTags(tags.split(" "));
+        }
+        i++;
+    }
+}
+
 void Flow::changeOneWall()
 {
-    if (items.isEmpty()) {
-        qDebug() << "empty items";
-        return;
-    }
-    std::uniform_int_distribution<int> dist(0, items.size()-1);
-    int index = dist(rgen);
-    QString srcfname = items.value(index);
+    QString srcfname = item;
     QFileInfo inspector(srcfname);
     if (!inspector.isReadable() || !inspector.isFile())
         return;
-    activeSource = srcfname;
+    activeSourceFilename = srcfname;
     QString rs(targetString);
     rs.append("^");
     QString rs2(targetString);
     rs2.append("+0+0");
     // convert to linear space
     QStringList args;
-    args << activeSource << "-colorspace" << "RGB";
+    args << activeSourceFilename << "-colorspace" << "RGB";
     switch (settings.scale) {
     case ScaledProportions:
         // scale to fit
