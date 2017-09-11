@@ -12,7 +12,7 @@ QMAKE_CXX = /bin/clazy
 
 TARGET = qt314wall
 TEMPLATE = app
-CONFIG += c++11
+CONFIG += c++14
 
 SOURCES += main.cpp\
         mainwindow.cpp \
