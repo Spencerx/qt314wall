@@ -8,8 +8,6 @@ QT       += core gui dbus network
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-QMAKE_CXX = /bin/clazy
-
 TARGET = qt314wall
 TEMPLATE = app
 CONFIG += c++14
