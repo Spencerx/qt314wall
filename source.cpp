@@ -258,9 +258,14 @@ void WebSource::request_json(QNetworkReply *jsonReply)
     }
     QVariantMap map = json.toVariant().toList().first().toMap();
 
+    QString fileUrlString = map.value("file_url").toString();
     url = jsonReply->request().url();
-    url.setQuery("");
-    url.setPath(map.value("file_url").toString());
+    if (fileUrlString.startsWith("//")) {
+        url = url.scheme() + ":" + fileUrlString;
+    } else {
+        url.setQuery("");
+        url.setPath(fileUrlString);
+    }
 
     fileReply = qnam.get(QNetworkRequest(url));
     connect(fileReply, &QNetworkReply::finished,
