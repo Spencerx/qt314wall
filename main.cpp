@@ -27,13 +27,6 @@ int main(int argc, char *argv[])
     QSettings::setDefaultFormat(QSettings::IniFormat);
 
     QApplication a(argc, argv);
-    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
-        QMessageBox::critical(nullptr, "Tray not found",
-                              "This program requires a system tray, but your "
-                              "desktop environment does not support this "
-                              "functionality. ");
-        return 1;
-    }
     if (Flow::passToPrevious(a.arguments().mid(1)))
         return 0;
 
@@ -53,51 +46,6 @@ Flow::Flow(QObject *parent) : QObject(parent),
     window(NULL), sysicon(NULL), ctxmenu(NULL), timer(NULL),
     converter(NULL), rgen(rseed()), requestingSource(false)
 {
-    QAction *a;
-
-    sysicon = new QSystemTrayIcon(this);
-    sysicon->setIcon(QIcon(":/images/clock2.png"));
-    sysicon->setToolTip(tr("Cutie-pie Wallpaper Changer"));
-
-    ctxmenu = new QMenu();
-
-    a = new QAction(this);
-    a->setText(tr("Show"));
-    connect(a, &QAction::triggered, this, &Flow::show_triggered);
-    ctxmenu->addAction(a);
-
-    enableAction = new QAction(this);
-    enableAction->setText(tr("Enable"));
-    enableAction->setCheckable(true);
-    connect(enableAction, &QAction::triggered, this, &Flow::enabled_triggered);
-    ctxmenu->addAction(enableAction);
-
-    a = new QAction(this);
-    a->setText(tr("Next Image"));
-    connect(a, &QAction::triggered, this, &Flow::nextImage_triggered);
-    ctxmenu->addAction(a);
-
-    ctxmenu->addSeparator();
-
-    a = new QAction(this);
-    a->setText(tr("Open Image"));
-    connect(a, &QAction::triggered, this, &Flow::openImage_triggered);
-    ctxmenu->addAction(a);
-
-    a = new QAction(this);
-    a->setText(tr("Open Source"));
-    connect(a, &QAction::triggered, this, &Flow::openSource_triggered);
-    ctxmenu->addAction(a);
-
-    ctxmenu->addSeparator();
-
-    a = new QAction(this);
-    a->setText(tr("Exit"));
-    connect(a, &QAction::triggered, qApp, &QApplication::quit);
-    ctxmenu->addAction(a);
-
-    sysicon->setContextMenu(ctxmenu);
-
     window = new MainWindow();
     connect(window, &MainWindow::dataChanged, this, &Flow::dialogDataChanged);
 
@@ -106,6 +54,10 @@ Flow::Flow(QObject *parent) : QObject(parent),
 
     timer = new QTimer(this);
     connect(timer, &QTimer::timeout, this, &Flow::requestNextImage);
+
+    if (QSystemTrayIcon::isSystemTrayAvailable())
+        setupSysicon();
+    window->setAttribute(Qt::WA_QuitOnClose, false);
 }
 
 Flow::~Flow()
@@ -146,7 +98,8 @@ void Flow::run()
     updateSources();
     requestNextImage();
     window->setData(settings);
-    sysicon->show();
+    if (sysicon)
+        sysicon->show();
 }
 
 void Flow::removeActiveFile()
@@ -164,8 +117,7 @@ void Flow::server_newConnection()
     delete sock;
 
     if (lines.count() < 2) {
-        window->show();
-        window->activateWindow();
+        show_triggered();
         return;
     }
     if (!maybeSetToFiles(lines.mid(1), lines.first()))
@@ -269,6 +221,54 @@ void Flow::changeWallConvertFinished(int exitCode)
             plasma.call("evaluateScript", script);
         }
     }
+}
+
+void Flow::setupSysicon()
+{
+    QAction *a;
+
+    sysicon = new QSystemTrayIcon(this);
+    sysicon->setIcon(QIcon(":/images/clock2.png"));
+    sysicon->setToolTip(tr("Cutie-pie Wallpaper Changer"));
+
+    ctxmenu = new QMenu();
+
+    a = new QAction(this);
+    a->setText(tr("Show"));
+    connect(a, &QAction::triggered, this, &Flow::show_triggered);
+    ctxmenu->addAction(a);
+
+    enableAction = new QAction(this);
+    enableAction->setText(tr("Enable"));
+    enableAction->setCheckable(true);
+    connect(enableAction, &QAction::triggered, this, &Flow::enabled_triggered);
+    ctxmenu->addAction(enableAction);
+
+    a = new QAction(this);
+    a->setText(tr("Next Image"));
+    connect(a, &QAction::triggered, this, &Flow::nextImage_triggered);
+    ctxmenu->addAction(a);
+
+    ctxmenu->addSeparator();
+
+    a = new QAction(this);
+    a->setText(tr("Open Image"));
+    connect(a, &QAction::triggered, this, &Flow::openImage_triggered);
+    ctxmenu->addAction(a);
+
+    a = new QAction(this);
+    a->setText(tr("Open Source"));
+    connect(a, &QAction::triggered, this, &Flow::openSource_triggered);
+    ctxmenu->addAction(a);
+
+    ctxmenu->addSeparator();
+
+    a = new QAction(this);
+    a->setText(tr("Exit"));
+    connect(a, &QAction::triggered, qApp, &QApplication::quit);
+    ctxmenu->addAction(a);
+
+    sysicon->setContextMenu(ctxmenu);
 }
 
 void Flow::setupSources()
@@ -439,7 +439,8 @@ void Flow::updateTargetString()
 
 void Flow::updateEnabled()
 {
-    enableAction->setChecked(settings.running);
+    if (enableAction)
+        enableAction->setChecked(settings.running);
 }
 
 void Flow::updateSources()

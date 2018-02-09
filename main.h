@@ -59,6 +59,7 @@ private:
     Sources::DropSource *dropSource;
     QList<Sources::WebSource*> webSources;
 
+    void setupSysicon();
     void setupSources();
     void setupServer();
     bool maybeSetToFiles(const QStringList &candidates, const QString &workingFolder = QString());

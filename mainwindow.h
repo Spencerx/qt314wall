@@ -40,7 +40,7 @@ namespace Ui {
 class MainWindow;
 }
 
-class MainWindow : public QDialog
+class MainWindow : public QWidget
 {
     Q_OBJECT
 public:

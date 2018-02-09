@@ -6,6 +6,8 @@
 #include <QDesktopWidget>
 #include <QDragEnterEvent>
 #include <QMimeData>
+#include <QSystemTrayIcon>
+#include <QDialogButtonBox>
 #include "source.h"
 
 const char *dialogdata::gravityStrings[] = {
@@ -14,11 +16,19 @@ const char *dialogdata::gravityStrings[] = {
 };
 
 MainWindow::MainWindow(QWidget *parent) :
-    QDialog(parent),
+    QWidget(parent),
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     setupSources();
+    if (!QSystemTrayIcon::isSystemTrayAvailable()) {
+        auto cancel = ui->buttonBox->button(QDialogButtonBox::Cancel);
+        ui->buttonBox->removeButton(cancel);
+        delete cancel;
+        ui->buttonBox->addButton(QDialogButtonBox::Close);
+        connect(ui->buttonBox, &QDialogButtonBox::rejected,
+                qApp, &QApplication::quit);
+    }
 }
 
 MainWindow::~MainWindow()
