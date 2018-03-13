@@ -25,9 +25,10 @@ struct dialogdata {
     bool multiply;
     Scaling scale;
     Gravity weight;
-    Folder folder;
-    bool running;
     QSize target;
+    Folder folder;
+    bool initOnce;
+    bool running;
     bool xsetbg;
     bool plasmaDBus;
 

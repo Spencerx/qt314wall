@@ -79,9 +79,10 @@ void MainWindow::setData(const dialogdata &d)
     ui->scale->setCurrentIndex(d.scale);
     ui->gravity->setCurrentIndex(d.weight);
     ui->folder->setCurrentIndex(d.folder);
-    ui->running->setChecked(d.running);
     ui->targetWidth->setValue(d.target.width());
     ui->targetHeight->setValue(d.target.height());
+    ui->initOnce->setChecked(d.initOnce);
+    ui->running->setChecked(d.running);
     ui->xsetbg->setChecked(d.xsetbg);
     ui->plasmaDBus->setChecked(d.plasmaDBus);
     updateBgcolorWidgetSheet();
@@ -170,6 +171,7 @@ void MainWindow::on_buttonBox_clicked(QAbstractButton *button)
         d.scale = static_cast<Scaling>(ui->scale->currentIndex());
         d.weight = static_cast<Gravity>(ui->gravity->currentIndex());
         d.folder = static_cast<Folder>(ui->folder->currentIndex());
+        d.initOnce = ui->initOnce->isChecked();
         d.running = ui->running->isChecked();
         d.target = QSize(ui->targetWidth->value(), ui->targetHeight->value());
         d.xsetbg = ui->xsetbg->isChecked();

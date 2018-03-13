@@ -96,7 +96,8 @@ void Flow::run()
     updateTargetString();
     updateEnabled();
     updateSources();
-    requestNextImage();
+    if (settings.initOnce)
+        requestNextImage();
     window->setData(settings);
     if (sysicon)
         sysicon->show();
@@ -347,6 +348,7 @@ void Flow::storeSettings()
     s.setValue("scale", settings.scale);
     s.setValue("weight", settings.weight);
     s.setValue("folder", settings.folder);
+    s.setValue("initOnce", settings.initOnce);
     s.setValue("running", settings.running);
     s.setValue("target", settings.target);
     s.setValue("xsetbg", settings.xsetbg);
@@ -372,6 +374,7 @@ void Flow::fetchSettings()
     settings.scale = static_cast<Scaling>(s.value("scale",ScaledProportions).toInt());
     settings.weight = static_cast<Gravity>(s.value("weight", SouthEast).toInt());
     settings.folder = static_cast<Folder>(s.value("folder", ShmFolder).toInt());
+    settings.initOnce = s.value("initOnce", true).toBool();
     settings.running = s.value("running", false).toBool();
     settings.target = s.value("target", QSize(1920,1080)).toSize();
     settings.xsetbg = s.value("xsetbg", false).toBool();
