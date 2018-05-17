@@ -265,8 +265,7 @@ void WebSource::request_json(QNetworkReply *jsonReply)
     if (fileUrlString.startsWith("//")) {
         imageUrl = imageUrl.scheme() + ":" + fileUrlString;
     } else {
-        imageUrl.setQuery("");
-        imageUrl.setPath(fileUrlString);
+        imageUrl = fileUrlString;
     }
 
     fileReply = qnam.get(QNetworkRequest(imageUrl));
