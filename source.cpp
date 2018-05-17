@@ -82,7 +82,9 @@ void FileListSource::processPath()
     }
     files_.clear();
     while (!f.atEnd()) {
-        files_.append(QString::fromUtf8(f.readLine()).trimmed());
+        QString line = QString::fromUtf8(f.readLine()).trimmed();
+        if (!line.isEmpty())
+            files_.append(line);
     }
 }
 
@@ -246,7 +248,7 @@ void WebSource::fetchFile()
 
 void WebSource::request_json(QNetworkReply *jsonReply)
 {
-    QUrl url;
+    QUrl imageUrl;
     QNetworkReply *fileReply;
 
     QByteArray response = jsonReply->readAll();
@@ -259,17 +261,17 @@ void WebSource::request_json(QNetworkReply *jsonReply)
     QVariantMap map = json.toVariant().toList().first().toMap();
 
     QString fileUrlString = map.value("file_url").toString();
-    url = jsonReply->request().url();
+    imageUrl = jsonReply->request().url();
     if (fileUrlString.startsWith("//")) {
-        url = url.scheme() + ":" + fileUrlString;
+        imageUrl = imageUrl.scheme() + ":" + fileUrlString;
     } else {
-        url.setQuery("");
-        url.setPath(fileUrlString);
+        imageUrl.setQuery("");
+        imageUrl.setPath(fileUrlString);
     }
 
-    fileReply = qnam.get(QNetworkRequest(url));
+    fileReply = qnam.get(QNetworkRequest(imageUrl));
     connect(fileReply, &QNetworkReply::finished,
-            this, [this,fileReply,url]() { request_file(fileReply, url); });
+            this, [this,fileReply,imageUrl]() { request_file(fileReply, imageUrl); });
 
     jsonReply->deleteLater();
 }
@@ -280,6 +282,7 @@ void WebSource::request_file(QNetworkReply *fileReply, QUrl url)
     QString ext = QFileInfo(url.path()).suffix();
     storeTempFile(fileReply->readAll(), ext);
     FileSource::fetchFile();
+    fileReply->deleteLater();
 }
 
 bool WebSource::storeTempFile(const QByteArray &data, QString ext)
