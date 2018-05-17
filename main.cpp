@@ -202,7 +202,7 @@ void Flow::changeWallConvertFinished(int exitCode)
     QFile org("/dev/shm/qt314wall-tempimage.png");
     std::uniform_int_distribution<uint64_t> dist(0, (uint64_t)-1ll);
     QString filename = QString("%1.png").arg(dist(rgen));
-    org.copy(this->destfolder + filename);
+    org.copy(this->destfolder + "/" + filename);
     removeActiveFile();
     org.remove();
     generatedFilename = filename;
@@ -387,6 +387,7 @@ void Flow::requestNextImage()
         return;
 
     timer->stop();
+    activeSource = nullptr;
     switch (settings.source) {
     case ImageSource:
         activeSource = fileSource;
@@ -414,7 +415,6 @@ void Flow::updateTimerInterval()
 {
     timer->stop();
     if (settings.running) {
-        qDebug() << "turned on timer";
         timer->start(std::max(10000, (settings.hr*3600000) + (settings.mn*60000) + (settings.sc*1000)));
     }
 }
@@ -432,6 +432,7 @@ void Flow::updateDestFolder()
     default:
         destfolder = workingDirNameTmp;
     }
+    destfolder += '/';
 }
 
 void Flow::updateTargetString()
@@ -522,6 +523,7 @@ void Flow::changeOneWall()
         args << "-compose" << "multiply";
     // make wall
     args << "-composite" << "/dev/shm/qt314wall-tempimage.png";
+    converter->setEnvironment(QProcess::systemEnvironment() << "MAGICK_OCL_DEVICE=OFF");
     converter->start("convert", args);
 }
 
