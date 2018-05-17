@@ -188,7 +188,8 @@ void MainWindow::on_bgcolorSelect_clicked()
     QColorDialog *qcd = new QColorDialog(this);
     qcd->setAttribute(Qt::WA_DeleteOnClose);
     qcd->setCurrentColor(QColor(ui->bgcolor->text()));
-    connect(qcd, &QColorDialog::colorSelected, [this](const QColor &color) {
+    connect(qcd, &QColorDialog::colorSelected,
+            this, [this](const QColor &color) {
         this->ui->bgcolor->setText(color.name());
         this->ui->bgcolor->setFocus();
         this->updateBgcolorWidgetSheet();
