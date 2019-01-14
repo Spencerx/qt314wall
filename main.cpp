@@ -222,6 +222,7 @@ void Flow::changeWallConvertFinished(int exitCode)
             plasma.call("evaluateScript", script);
         }
     }
+    sysicon->showMessage("Cutie-pie Wallpaper Changer", "New wallpaper", QIcon(), 3000);
 }
 
 void Flow::setupSysicon()
